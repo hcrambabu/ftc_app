@@ -93,12 +93,12 @@ public class AnimatornicsRobot {
             double liftPower =  op.gamepad1.left_trigger - op.gamepad1.right_trigger;
             liftPower = liftPower; // full power is too fast.
             liftMotor_1.setPower(liftPower);
-            liftMotor_2.setPower(-liftPower);
+            liftMotor_2.setPower(liftPower);
             telemetry.addData("Status", "liftPower: " + liftPower);
         } else {
             double liftPower = 0.5;
             liftMotor_1.setPower(liftPower);
-            liftMotor_2.setPower(-liftPower);
+            liftMotor_2.setPower(liftPower);
             telemetry.addData("Status", "liftPower: " + liftPower);
         }
 
@@ -129,7 +129,7 @@ public class AnimatornicsRobot {
     public void moveLift(LinearOpMode op, double time, String direction, double liftPower) {
 
         liftMotor_1.setPower(liftPower);
-        liftMotor_2.setPower(-liftPower);
+        liftMotor_2.setPower(liftPower);
         runtime.reset();
         while (op.opModeIsActive() && runtime.seconds() < time) {
             telemetry.addData("Path", "Lift:"+direction+": %2.5f S Elapsed", runtime.seconds());
@@ -137,6 +137,11 @@ public class AnimatornicsRobot {
         }
         liftMotor_1.setPower(0.0);
         liftMotor_2.setPower(0.0);
+    }
+
+    public void setLiftPower(LinearOpMode op, double liftPower) {
+        liftMotor_1.setPower(liftPower);
+        liftMotor_2.setPower(liftPower);
     }
 
     public void moveRobot(LinearOpMode op, double time, String direction, double lfPower, double lbPower, double rfPower, double rbPower) {
@@ -173,5 +178,18 @@ public class AnimatornicsRobot {
             telemetry.update();
         }
         slideMotor.setPower(0.0);
+    }
+
+    public void setCollectorPower(LinearOpMode op, double time, String direction, double crServoPower) {
+
+        leftServo.setPower(crServoPower);
+        rightServo.setPower(-crServoPower);
+        runtime.reset();
+        while (op.opModeIsActive() && runtime.seconds() < time) {
+            telemetry.addData("Path", "Collector:"+direction+": %2.5f S Elapsed", runtime.seconds());
+            telemetry.update();
+        }
+        leftServo.setPower(0.0);
+        rightServo.setPower(0.0);
     }
 }
