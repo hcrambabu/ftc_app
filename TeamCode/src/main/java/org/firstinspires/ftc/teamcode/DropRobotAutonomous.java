@@ -93,10 +93,12 @@ public abstract class DropRobotAutonomous extends LinearOpMode {
             telemetry.update();
             waitForStart();
         }
+        // Drop the robot to ground
+        robot.moveLift(this, 1.0, "Drop", -1.0);
         // start lateral left
         robot.setWheelPower(0.5, -0.5, 0.5, -0.5);
         // Drop the robot to ground
-        robot.moveLift(this, 1.6, "Drop", -1.0);
+        robot.moveLift(this, 1.0, "Drop", -1.0);
         // stop lateral left
         robot.setWheelPower(0.0, 0.0, 0.0, 0.0);
 
@@ -104,7 +106,7 @@ public abstract class DropRobotAutonomous extends LinearOpMode {
             targetsRoverRuckus.activate();
             targetVisible = false;
         }
-        robot.moveRobot(this, 1.0, "Turn-Right",-0.2, -0.2, -0.2, -0.2);
+        robot.moveRobot(this, 1.5, "Turn-Right",-0.2, -0.2, -0.2, -0.2);
         robot.setWheelPower(0.0, 0.0, 0.0, 0.0);
         telemetry.addData(">", "Done Turning......");
         telemetry.update();
@@ -135,7 +137,8 @@ public abstract class DropRobotAutonomous extends LinearOpMode {
             }
 
             if (isGoldDetected) {
-                trackGoldMineral(10.0);
+                trackGoldMineral(6.0);
+                robot.moveRobot(this, 1.0, "forward",-0.3, -0.3, 0.3, 0.3);
             } else {
                 telemetry.addData("Sorry!!!", "No GOLD mineral");
             }
@@ -165,14 +168,19 @@ public abstract class DropRobotAutonomous extends LinearOpMode {
                 robot.moveRobot(this, 1.5, "right",-0.3, -0.3, -0.3, -0.3);
             }
 
-            // Go close to the depo
-            robot.moveRobot(this, 3.0, "forward",-0.3, -0.3, 0.3, 0.3);
             // extend Slide up
-            robot.moveSlide(this, 5.0, "up", -1.0);
+            //robot.moveSlide(this, 2.5, "up", -1.0);
             // lift up
-            robot.moveLift(this, 4.0, "Close", 1.0);
+            //robot.moveLift(this, 4.0, "Close", 1.0);
             // drop team marker
-            robot.setCollectorPower(this, 4.0, "Out", -1.0);
+            //robot.setCollectorPower(this, 4.0, "Out", -1.0);
+
+
+            // Turn / flip
+            robot.moveRobot(this, 1.5, "left",1., 1.0, 1.0, 1.0);
+            // Go close to the depo
+            robot.moveRobot(this, 1.0, "forward",0.5, 0.5, -0.5, -0.5);
+            robot.turnTeamMarkerServo(this, 2.0, "left", -1.0f);
         } else {
             if(goldPosition == Position.RIGHT) {
                 // Go little forward
@@ -189,9 +197,9 @@ public abstract class DropRobotAutonomous extends LinearOpMode {
             // Go close to the crater
             //robot.moveRobot(this, 1.0, "forward",-0.3, -0.3, 0.3, 0.3);
             // extend Slide
-            robot.moveSlide(this, 5.0, "up", -1.0);
+            robot.moveSlide(this, 1.0, "up", -1.0);
             // Drop slide in to the crater
-            robot.moveLift(this, 3.0, "Close", 1.0);
+            robot.moveLift(this, 2.0, "Close", 1.0);
         }
     }
 

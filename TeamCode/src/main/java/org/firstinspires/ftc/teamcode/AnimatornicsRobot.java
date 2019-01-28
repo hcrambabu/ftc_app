@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.content.res.AssetFileDescriptor;
+import android.media.MediaPlayer;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -25,11 +28,17 @@ public class AnimatornicsRobot {
     //private Servo rightServo;
     private CRServo leftServo;
     private CRServo rightServo;
+    private CRServo teamMarkerServo;
 
     private Telemetry telemetry;
 
     private boolean holdLift = false;
+    private boolean turnOnlyOneServo = false;
     private ElapsedTime runtime = new ElapsedTime();
+
+    private MediaPlayer player = null;
+    private AssetFileDescriptor helloDescriptor = null;
+    private AssetFileDescriptor byeDescriptor = null;
 
     /*
      * Going forward: lb:-1, lf:-1, rf:1, rb:1
@@ -56,11 +65,31 @@ public class AnimatornicsRobot {
         //rightServo = hardwareMap.get(Servo.class, "rightServo");
         leftServo = hardwareMap.get(CRServo.class, "leftServo");
         rightServo = hardwareMap.get(CRServo.class, "rightServo");
+        teamMarkerServo = hardwareMap.get(CRServo.class, "teamMarkerServo");
 
         liftMotor_1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         liftMotor_2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        slideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        /*slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        liftMotor_1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftMotor_2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftMotor_1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        liftMotor_2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);*/
 
         telemetry.addData("Status", "DC motor variables initialized");
+        System.out.println("slideMotor controller = " + slideMotor.getController());
+        System.out.println("liftMotor_1 controller = " + liftMotor_1.getController());
+        System.out.println("liftMotor_2 controller = " + liftMotor_2.getController());
+
+        try {
+            helloDescriptor = hardwareMap.appContext.getAssets().openFd("Hello.mp3");
+            byeDescriptor = hardwareMap.appContext.getAssets().openFd("ByeBye.mp3");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     public void manualDrive(LinearOpMode op) {
@@ -95,6 +124,7 @@ public class AnimatornicsRobot {
             liftMotor_1.setPower(liftPower);
             liftMotor_2.setPower(liftPower);
             telemetry.addData("Status", "liftPower: " + liftPower);
+            //System.out.println("SaiC: liftPower="+liftPower+", position_1="+liftMotor_1.getCurrentPosition()+", position_2="+liftMotor_2.getCurrentPosition());
         } else {
             double liftPower = 0.5;
             liftMotor_1.setPower(liftPower);
@@ -107,6 +137,8 @@ public class AnimatornicsRobot {
         slidePower = slidePower; // full power is too fast.
         slideMotor.setPower(slidePower);
         telemetry.addData("Status", "slidePower: " + slidePower);
+        //System.out.println("SaiC: slidePower="+slidePower+", position="+slideMotor.getCurrentPosition());
+
 
         /*double leftServoPower = op.gamepad2.left_trigger;
         double rightServoPower = op.gamepad2.right_trigger;
@@ -121,9 +153,51 @@ public class AnimatornicsRobot {
         } else {
             rightServo.setPosition(0.0);
         }*/
-        double crServoPower = op.gamepad2.left_trigger - op.gamepad2.right_trigger;
-        leftServo.setPower(crServoPower);
-        rightServo.setPower(-crServoPower);
+
+        if(op.gamepad2.y) {
+            turnOnlyOneServo = true;
+        }
+        if(op.gamepad2.x) {
+            turnOnlyOneServo = false;
+        }
+
+        if(!turnOnlyOneServo) {
+            double crServoPower = op.gamepad2.left_trigger - op.gamepad2.right_trigger;
+            leftServo.setPower(crServoPower);
+            rightServo.setPower(-crServoPower);
+        } else {
+            double crServoPower = op.gamepad2.left_trigger - op.gamepad2.right_trigger;
+            leftServo.setPower(crServoPower);
+        }
+
+        if(op.gamepad1.a || op.gamepad1.b) {
+            try {
+                if(player != null) {
+                    if(player.isPlaying()) player.stop();
+                    player.release();
+                }
+                player = new MediaPlayer();
+                if(op.gamepad1.a)
+                    player.setDataSource(helloDescriptor.getFileDescriptor(), helloDescriptor.getStartOffset(), helloDescriptor.getLength());
+                else if(op.gamepad1.b)
+                    player.setDataSource(byeDescriptor.getFileDescriptor(), byeDescriptor.getStartOffset(), byeDescriptor.getLength());
+                player.prepare();
+                player.setVolume(1f, 1f);
+                player.setLooping(false);
+                player.start();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        if(op.gamepad2.a && op.gamepad2.b) {
+            teamMarkerServo.setPower(0.0);
+        } else if (op.gamepad2.a){
+            teamMarkerServo.setPower(1.0);
+        } else if(op.gamepad2.b) {
+            teamMarkerServo.setPower(-1.0);
+        }
+
     }
 
     public void moveLift(LinearOpMode op, double time, String direction, double liftPower) {
@@ -191,5 +265,16 @@ public class AnimatornicsRobot {
         }
         leftServo.setPower(0.0);
         rightServo.setPower(0.0);
+    }
+
+    public void turnTeamMarkerServo(LinearOpMode op, double time, String direction, double tmPower) {
+
+        teamMarkerServo.setPower(tmPower);
+        runtime.reset();
+        while (op.opModeIsActive() && runtime.seconds() < time) {
+            telemetry.addData("Path", "TM:"+direction+": %2.5f S Elapsed", runtime.seconds());
+            telemetry.update();
+        }
+        teamMarkerServo.setPower(0.0);
     }
 }
